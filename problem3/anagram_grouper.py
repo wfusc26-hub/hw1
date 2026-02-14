@@ -7,6 +7,12 @@ import json
 import sys
 from collections import defaultdict
 
+TEST_INPUT_LINES = [
+    "listen silent enlist inlets google giggle rat tar art",
+    "dusty study night thing cat act tac tacit attic tactic",
+    "state taste tates seats asset teats teat set eats east",
+]
+
 
 def group_anagrams(words: list[str]) -> list[list[str]]:
     """Return groups of words that are anagrams.
@@ -20,11 +26,27 @@ def group_anagrams(words: list[str]) -> list[list[str]]:
     return list(groups.values())
 
 
+def run_embedded_tests() -> None:
+    """Run the bundled Problem 3 test inputs."""
+    for idx, line in enumerate(TEST_INPUT_LINES, start=1):
+        words = line.split()
+        print(f"Input {idx}:")
+        print(line)
+        print("Output:")
+        print(json.dumps(group_anagrams(words)))
+        print()
+
+
 def main() -> None:
-    """CLI entrypoint: pass words as arguments."""
+    """CLI entrypoint.
+
+    - With arguments: groups those words.
+    - Without arguments: runs bundled test inputs.
+    """
     words = sys.argv[1:]
     if not words:
-        raise SystemExit("Usage: python anagram_grouper.py <word1> <word2> ...")
+        run_embedded_tests()
+        return
 
     print(json.dumps(group_anagrams(words)))
 
