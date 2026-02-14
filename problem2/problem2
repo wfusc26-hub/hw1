@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+import re
+
+
+def is_palindrome_sentence(sentence: str) -> bool:
+    cleaned_sentence = re.sub(r"[^a-z0-9]", "", sentence.lower())
+    return cleaned_sentence == cleaned_sentence[::-1]
+
+
+def check_sentence(sentence: str) -> str:
+    if is_palindrome_sentence(sentence):
+        return "This is a palindrome."
+    return "This is not a palindrome."
+
+
+def main() -> None:
+    test_inputs = [
+        "A man, a plan, a canal: Panama!",
+        "No 'x' in Nixon",
+        "Was it a car or a cat I saw?",
+    ]
+
+    for index, sentence in enumerate(test_inputs, start=1):
+        print(f"Input {index}: {sentence}")
+        print(check_sentence(sentence))
+
+
+if __name__ == "__main__":
+    main()
