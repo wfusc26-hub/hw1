@@ -24,7 +24,7 @@ def main() -> None:
     """CLI entrypoint: pass words as arguments."""
     words = sys.argv[1:]
     if not words:
-        raise SystemExit("Usage: ./problem3 <word1> <word2> ...")
+        raise SystemExit("Usage: python anagram_grouper.py <word1> <word2> ...")
 
     print(json.dumps(group_anagrams(words)))
 
