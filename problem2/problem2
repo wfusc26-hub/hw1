@@ -7,13 +7,22 @@ def is_palindrome_sentence(sentence: str) -> bool:
     return cleaned_sentence == cleaned_sentence[::-1]
 
 
-def main() -> None:
-    sentence = input("Enter a sentence: ")
-
+def check_sentence(sentence: str) -> str:
     if is_palindrome_sentence(sentence):
-        print("This is a palindrome.")
-    else:
-        print("This is not a palindrome.")
+        return "This is a palindrome."
+    return "This is not a palindrome."
+
+
+def main() -> None:
+    test_inputs = [
+        "A man, a plan, a canal: Panama!",
+        "No 'x' in Nixon",
+        "Was it a car or a cat I saw?",
+    ]
+
+    for index, sentence in enumerate(test_inputs, start=1):
+        print(f"Input {index}: {sentence}")
+        print(check_sentence(sentence))
 
 
 if __name__ == "__main__":
