@@ -74,22 +74,64 @@ def find_path_recursive(maze: list[list[int]]) -> list[tuple[int, int]] | None:
     return None
 
 
+def format_path(path: list[tuple[int, int]] | None) -> str:
+    if path is None:
+        return "No path found"
+    return " -> ".join(f"({row},{col})" for row, col in path)
+
+
+def solve_maze_text(raw_text: str) -> str:
+    try:
+        maze = parse_maze(raw_text)
+    except ValueError as error:
+        return f"Invalid maze input: {error}"
+    return format_path(find_path_recursive(maze))
+
+
+TEST_INPUTS: list[tuple[str, str]] = [
+    (
+        "Input 1",
+        "0010\n"
+        "0010\n"
+        "0000\n"
+        "0110\n"
+        "0000\n",
+    ),
+    (
+        "Input 2",
+        "000\n"
+        "110\n"
+        "010\n"
+        "010\n"
+        "000\n",
+    ),
+    (
+        "Input 3",
+        "010\n"
+        "111\n"
+        "010\n"
+        "000\n",
+    ),
+]
+
+
+def run_embedded_tests() -> None:
+    for test_name, raw_maze in TEST_INPUTS:
+        print(test_name)
+        print(raw_maze.rstrip("\n"))
+        print("Output")
+        print(solve_maze_text(raw_maze))
+        print()
+
+
 def main() -> None:
     raw_input = sys.stdin.read()
 
-    try:
-        maze = parse_maze(raw_input)
-    except ValueError as error:
-        print(f"Invalid maze input: {error}")
+    if raw_input.strip():
+        print(solve_maze_text(raw_input))
         return
 
-    path = find_path_recursive(maze)
-
-    if path is None:
-        print("No path found")
-        return
-
-    print(" -> ".join(f"({row},{col})" for row, col in path))
+    run_embedded_tests()
 
 
 if __name__ == "__main__":
