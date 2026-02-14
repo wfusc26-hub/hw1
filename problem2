@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+import re
+
+
+def is_palindrome_sentence(sentence: str) -> bool:
+    cleaned_sentence = re.sub(r"[^a-z0-9]", "", sentence.lower())
+    return cleaned_sentence == cleaned_sentence[::-1]
+
+
+def main() -> None:
+    sentence = input("Enter a sentence: ")
+
+    if is_palindrome_sentence(sentence):
+        print("This is a palindrome.")
+    else:
+        print("This is not a palindrome.")
+
+
+if __name__ == "__main__":
+    main()
