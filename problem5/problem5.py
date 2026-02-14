@@ -153,3 +153,56 @@ def path_to_directions(path: Sequence[Coordinate]) -> List[str]:
     for (r1, c1), (r2, c2) in zip(path, path[1:]):
         directions.append(move_map.get((r2 - r1, c2 - c1), "TELEPORT"))
     return directions
+
+
+SAMPLE_INPUTS: List[Tuple[str, List[str]]] = [
+    (
+        "Input 1 (simple S->E, no teleports)",
+        [
+            "S00",
+            "110",
+            "00E",
+        ],
+    ),
+    (
+        "Input 2 (teleports help bypass a wall)",
+        [
+            "S1T001",
+            "111101",
+            "0000T1",
+            "101111",
+            "10000E",
+        ],
+    ),
+    (
+        "Input 3 (multiple teleports; choose best T)",
+        [
+            "S001T0",
+            "110110",
+            "T00010",
+            "0111T0",
+            "00010E",
+        ],
+    ),
+]
+
+
+def run_sample_inputs() -> None:
+    """Run the three provided Problem 5 test inputs and print outputs."""
+    for label, maze in SAMPLE_INPUTS:
+        path = shortest_path_with_teleports(maze)
+        print(label)
+        for row in maze:
+            print(row)
+        print("Path:", path)
+        if path is None:
+            print("Moves: None")
+            print("Directions: None")
+        else:
+            print("Moves:", len(path) - 1)
+            print("Directions:", path_to_directions(path))
+        print()
+
+
+if __name__ == "__main__":
+    run_sample_inputs()
