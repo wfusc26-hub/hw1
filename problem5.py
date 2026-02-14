@@ -1,0 +1,134 @@
+"""Recursive shortest-path solver for mazes with teleports.
+
+Maze symbols:
+- 'S': start
+- 'E': exit
+- 'T': teleport pad
+- '#': wall
+- any other character is treated as walkable floor
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List, Optional, Sequence, Tuple
+
+Coordinate = Tuple[int, int]
+
+
+def shortest_path_with_teleports(maze: Sequence[str]) -> Optional[List[Coordinate]]:
+    """Return the shortest path from S to E, or None if no path exists.
+
+    The returned path is a list of (row, col) coordinates from start to exit.
+    Each normal move has cost 1. Teleporting from one T cell to any other T
+    cell also has cost 1.
+    """
+
+    if not maze:
+        raise ValueError("Maze must not be empty.")
+
+    width = len(maze[0])
+    if width == 0:
+        raise ValueError("Maze rows must not be empty.")
+    if any(len(row) != width for row in maze):
+        raise ValueError("Maze must be rectangular.")
+
+    start: Optional[Coordinate] = None
+    exit_cell: Optional[Coordinate] = None
+    teleports: List[Coordinate] = []
+
+    for r, row in enumerate(maze):
+        for c, cell in enumerate(row):
+            if cell == "S":
+                if start is not None:
+                    raise ValueError("Maze must contain exactly one start 'S'.")
+                start = (r, c)
+            elif cell == "E":
+                if exit_cell is not None:
+                    raise ValueError("Maze must contain exactly one exit 'E'.")
+                exit_cell = (r, c)
+            elif cell == "T":
+                teleports.append((r, c))
+
+    if start is None or exit_cell is None:
+        raise ValueError("Maze must contain one 'S' and one 'E'.")
+
+    directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+    parents: Dict[Coordinate, Optional[Coordinate]] = {start: None}
+    teleports_expanded = False
+
+    def in_bounds(r: int, c: int) -> bool:
+        return 0 <= r < len(maze) and 0 <= c < width
+
+    def is_walkable(r: int, c: int) -> bool:
+        return maze[r][c] != "#"
+
+    def reconstruct_path() -> List[Coordinate]:
+        path: List[Coordinate] = []
+        current: Optional[Coordinate] = exit_cell
+        while current is not None:
+            path.append(current)
+            current = parents[current]
+        path.reverse()
+        return path
+
+    def search_level(frontier: List[Coordinate]) -> Optional[List[Coordinate]]:
+        nonlocal teleports_expanded
+
+        if not frontier:
+            return None
+        if exit_cell in frontier:
+            return reconstruct_path()
+
+        next_frontier: List[Coordinate] = []
+
+        for row, col in frontier:
+            for dr, dc in directions:
+                nr, nc = row + dr, col + dc
+                candidate = (nr, nc)
+
+                if not in_bounds(nr, nc):
+                    continue
+                if not is_walkable(nr, nc):
+                    continue
+                if candidate in parents:
+                    continue
+
+                parents[candidate] = (row, col)
+                next_frontier.append(candidate)
+
+            if maze[row][col] == "T" and len(teleports) > 1 and not teleports_expanded:
+                # T cells form a complete graph; expanding once is enough.
+                teleports_expanded = True
+                for t_row, t_col in teleports:
+                    target = (t_row, t_col)
+                    if target == (row, col) or target in parents:
+                        continue
+                    parents[target] = (row, col)
+                    next_frontier.append(target)
+
+        return search_level(next_frontier)
+
+    return search_level([start])
+
+
+def path_to_directions(path: Sequence[Coordinate]) -> List[str]:
+    """Convert a coordinate path into movement directions.
+
+    Normal moves are one of: U, R, D, L.
+    Teleport moves are encoded as TELEPORT.
+    """
+
+    if not path:
+        return []
+
+    move_map = {
+        (-1, 0): "U",
+        (0, 1): "R",
+        (1, 0): "D",
+        (0, -1): "L",
+    }
+
+    directions: List[str] = []
+    for (r1, c1), (r2, c2) in zip(path, path[1:]):
+        directions.append(move_map.get((r2 - r1, c2 - c1), "TELEPORT"))
+    return directions
