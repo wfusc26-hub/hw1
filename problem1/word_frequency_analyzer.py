@@ -8,6 +8,7 @@ Capitalization and punctuation are ignored.
 from __future__ import annotations
 
 import argparse
+import heapq
 import re
 import sys
 from collections import Counter
@@ -42,8 +43,11 @@ def top_k_frequent_words(text: str, k: int = 10) -> list[tuple[str, int]]:
         return []
 
     counts = Counter(extract_words(text))
-    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
-    return ordered[:k]
+    if len(counts) <= k:
+        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+
+    # Avoid sorting all unique words when k is small.
+    return heapq.nsmallest(k, counts.items(), key=lambda item: (-item[1], item[0]))
 
 
 def format_results(results: Iterable[tuple[str, int]]) -> str:
@@ -92,6 +96,11 @@ def main() -> None:
     """CLI entrypoint."""
     args = parse_args(sys.argv[1:])
     if args.samples:
+        run_sample_inputs(args.k)
+        return
+
+    # If no data is piped in, avoid blocking on stdin and run sample inputs.
+    if sys.stdin.isatty():
         run_sample_inputs(args.k)
         return
 
