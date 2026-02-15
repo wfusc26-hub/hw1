@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import io
+import os
+import select
+import stat
 import sys
 
 
@@ -124,8 +128,38 @@ def run_embedded_tests() -> None:
         print()
 
 
+def read_stdin_if_available() -> str:
+    stdin = sys.stdin
+    if stdin is None:
+        return ""
+
+    try:
+        fileno = stdin.fileno()
+    except (AttributeError, OSError, io.UnsupportedOperation):
+        return ""
+
+    try:
+        mode = os.fstat(fileno).st_mode
+    except OSError:
+        return ""
+
+    has_stream_input = stat.S_ISREG(mode) or stat.S_ISFIFO(mode)
+    if not has_stream_input:
+        try:
+            ready, _, _ = select.select([stdin], [], [], 0)
+        except (OSError, ValueError):
+            return ""
+        if not ready:
+            return ""
+
+    try:
+        return stdin.read()
+    except OSError:
+        return ""
+
+
 def main() -> None:
-    raw_input = sys.stdin.read()
+    raw_input = read_stdin_if_available()
 
     if raw_input.strip():
         print(solve_maze_text(raw_input))
