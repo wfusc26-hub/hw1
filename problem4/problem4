@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import io
+import os
+import select
+import stat
+import sys
+
+
+def parse_maze(raw_text: str) -> list[list[int]]:
+    rows: list[list[int]] = []
+
+    for raw_line in raw_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        if " " in line:
+            tokens = line.split()
+            if any(token not in {"0", "1"} for token in tokens):
+                raise ValueError("Maze can only contain 0 and 1 values.")
+            row = [int(token) for token in tokens]
+        else:
+            if any(ch not in {"0", "1"} for ch in line):
+                raise ValueError("Maze can only contain 0 and 1 values.")
+            row = [int(ch) for ch in line]
+
+        rows.append(row)
+
+    if not rows:
+        return []
+
+    width = len(rows[0])
+    if width == 0 or any(len(row) != width for row in rows):
+        raise ValueError("Maze must be rectangular.")
+
+    return rows
+
+
+def find_path_recursive(maze: list[list[int]]) -> list[tuple[int, int]] | None:
+    if not maze or not maze[0]:
+        return None
+
+    height = len(maze)
+    width = len(maze[0])
+
+    if maze[0][0] == 1 or maze[height - 1][width - 1] == 1:
+        return None
+
+    sys.setrecursionlimit(max(1000, height * width + 10))
+
+    visited = [[False] * width for _ in range(height)]
+    path: list[tuple[int, int]] = []
+    directions = ((0, 1), (1, 0), (0, -1), (-1, 0))
+
+    def dfs(row: int, col: int) -> bool:
+        if row < 0 or row >= height or col < 0 or col >= width:
+            return False
+        if maze[row][col] == 1 or visited[row][col]:
+            return False
+
+        visited[row][col] = True
+        path.append((row, col))
+
+        if row == height - 1 and col == width - 1:
+            return True
+
+        for delta_row, delta_col in directions:
+            if dfs(row + delta_row, col + delta_col):
+                return True
+
+        path.pop()
+        return False
+
+    if dfs(0, 0):
+        return path
+    return None
+
+
+def format_path(path: list[tuple[int, int]] | None) -> str:
+    if path is None:
+        return "No path found"
+    return " -> ".join(f"({row},{col})" for row, col in path)
+
+
+def solve_maze_text(raw_text: str) -> str:
+    try:
+        maze = parse_maze(raw_text)
+    except ValueError as error:
+        return f"Invalid maze input: {error}"
+    return format_path(find_path_recursive(maze))
+
+
+TEST_INPUTS: list[tuple[str, str]] = [
+    (
+        "Input 1",
+        "0010\n"
+        "0010\n"
+        "0000\n"
+        "0110\n"
+        "0000\n",
+    ),
+    (
+        "Input 2",
+        "000\n"
+        "110\n"
+        "010\n"
+        "010\n"
+        "000\n",
+    ),
+    (
+        "Input 3",
+        "010\n"
+        "111\n"
+        "010\n"
+        "000\n",
+    ),
+]
+
+
+def run_embedded_tests() -> None:
+    for test_name, raw_maze in TEST_INPUTS:
+        print(test_name)
+        print(raw_maze.rstrip("\n"))
+        print("Output")
+        print(solve_maze_text(raw_maze))
+        print()
+
+
+def read_stdin_if_available() -> str:
+    stdin = sys.stdin
+    if stdin is None:
+        return ""
+
+    try:
+        fileno = stdin.fileno()
+    except (AttributeError, OSError, io.UnsupportedOperation):
+        return ""
+
+    try:
+        mode = os.fstat(fileno).st_mode
+    except OSError:
+        return ""
+
+    has_stream_input = stat.S_ISREG(mode) or stat.S_ISFIFO(mode)
+    if not has_stream_input:
+        try:
+            ready, _, _ = select.select([stdin], [], [], 0)
+        except (OSError, ValueError):
+            return ""
+        if not ready:
+            return ""
+
+    try:
+        return stdin.read()
+    except OSError:
+        return ""
+
+
+def main() -> None:
+    raw_input = read_stdin_if_available()
+
+    if raw_input.strip():
+        print(solve_maze_text(raw_input))
+        return
+
+    run_embedded_tests()
+
+
+if __name__ == "__main__":
+    main()
