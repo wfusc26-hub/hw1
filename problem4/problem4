@@ -124,24 +124,8 @@ def run_embedded_tests() -> None:
         print()
 
 
-def safe_read_stdin() -> str:
-    if sys.stdin is None:
-        return ""
-
-    try:
-        if sys.stdin.isatty():
-            return ""
-    except OSError:
-        return ""
-
-    try:
-        return sys.stdin.read()
-    except OSError:
-        return ""
-
-
 def main() -> None:
-    raw_input = safe_read_stdin()
+    raw_input = sys.stdin.read()
 
     if raw_input.strip():
         print(solve_maze_text(raw_input))
